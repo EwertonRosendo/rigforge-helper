@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>RigForge cart report</title>
+  <style>
+    body { font: 15px/1.5 system-ui, sans-serif; background: #0d0f14; color: #e8ebf2; max-width: 760px; margin: 32px auto; padding: 0 16px; }
+    table { width: 100%; border-collapse: collapse; }
+    td { padding: 8px; border-bottom: 1px solid #2a3140; vertical-align: top; }
+    .added { color: #36d399; } .failed { color: #f87272; } .muted { color: #8a93a6; font-size: 13px; }
+    a { color: #5b8cff; }
+  </style>
+</head>
+<body>
+  <h1>RigForge cart report</h1>
+  <p class="muted">The helper only adds items to your carts. Review each cart (opened in other tabs) and check out yourself.</p>
+  <table id="rows"></table>
+  <h2>Carts</h2>
+  <ul id="carts"></ul>
+  <script src="report.js"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "RigForge Cart Helper",
+  "version": "0.1.0",
+  "description": "Adds your RigForge build to the KaBuM!, Pichau and Terabyte carts for you. You check out yourself.",
+  "permissions": ["storage", "tabs"],
+  "host_permissions": [
+    "https://www.kabum.com.br/*",
+    "https://www.pichau.com.br/*",
+    "https://www.terabyteshop.com.br/*"
+  ],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.kabum.com.br/*",
+        "https://www.pichau.com.br/*",
+        "https://www.terabyteshop.com.br/*"
+      ],
+      "js": ["store.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["http://localhost/*", "http://127.0.0.1/*", "https://rigforge.example.com/*"],
+      "js": ["site.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
