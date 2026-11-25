@@ -31,7 +31,7 @@ jobs:
           cp dist/*.zip /tmp/first.zip
           node scripts/build.mjs > /dev/null
           cmp /tmp/first.zip dist/*.zip && echo "byte-identical rebuild"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: rigforge-helper
           path: dist/
