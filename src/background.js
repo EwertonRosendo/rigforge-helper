@@ -15,9 +15,20 @@ const hostOk = (url, store) => {
     return false;
   }
 };
-const httpsOk = (url) => {
-  try { return new URL(url).protocol === "https:"; } catch { return false; }
+// Affiliate networks whose tracking links may be opened before landing on the store page.
+// Anything else is refused: the extension only ever opens pages on these domains or the stores.
+const AFFILIATE_HOSTS = ["awin1.com", "lomadee.com", "lmdee.link", "lomadee.com.br"];
+
+const onHosts = (url, hosts) => {
+  try {
+    const u = new URL(url);
+    return u.protocol === "https:" && hosts.some((h) => u.hostname === h || u.hostname.endsWith("." + h));
+  } catch {
+    return false;
+  }
 };
+/** A tracking link must go to the same store or through a known affiliate network. */
+const trackOk = (url, store) => hostOk(url, store) || onHosts(url, AFFILIATE_HOSTS);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const getJob = async () => (await chrome.storage.local.get("job")).job || null;
@@ -32,7 +43,7 @@ async function start(jobs) {
     carts[j.store] = j.cartUrl;
     for (const it of j.items) {
       // The product URL must really belong to the store; the tracking URL may go through an affiliate network.
-      if (!hostOk(it.url, j.store) || !httpsOk(it.trackUrl)) return { ok: false, error: "bad item url" };
+      if (!hostOk(it.url, j.store) || !trackOk(it.trackUrl, j.store)) return { ok: false, error: "bad item url" };
       queue.push({ store: j.store, title: String(it.title).slice(0, 200), url: it.url, trackUrl: it.trackUrl, status: "pending", note: "" });
     }
   }

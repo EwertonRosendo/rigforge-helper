@@ -1,7 +1,7 @@
 // Runs on the RigForge site only (see manifest "matches"). Bridges the page to the extension.
 // Messages (page -> extension):
 //   RIGFORGE_PING            -> RIGFORGE_PONG { version, features }
-//   RIGFORGE_DETECT { id }   -> RIGFORGE_DETECT_RESULT { id, ok, cpu, threads, ramBytes }
+//   RIGFORGE_DETECT { id }   -> RIGFORGE_DETECT_RESULT { id, ok, gpu, cpu, threads, ramBytes }
 //   RIGFORGE_CART { jobs }   -> RIGFORGE_ACK { ok }
 window.addEventListener("message", (e) => {
   if (e.source !== window || e.origin !== location.origin) return;
