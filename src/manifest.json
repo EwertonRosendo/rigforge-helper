@@ -3,6 +3,8 @@
   "name": "RigForge Helper",
   "version": "0.3.0",
   "description": "Detects your PC (graphics card, exact CPU and RAM) for RigForge and fills the KaBuM!, Pichau and Terabyte carts with your build. You check out yourself.",
+  "homepage_url": "https://github.com/EwertonRosendo/rigforge-helper",
+  "icons": { "16": "icons/icon-16.png", "32": "icons/icon-32.png", "48": "icons/icon-48.png", "128": "icons/icon-128.png" },
   "permissions": ["storage", "tabs", "system.cpu", "system.memory", "offscreen"],
   "host_permissions": [
     "https://www.kabum.com.br/*",
