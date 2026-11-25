@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Audit, lint, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Syntax check
+        run: for f in src/*.js scripts/*.mjs; do node --check "$f"; done
+      - name: Security audit (no network / remote code / cookies; fixed permissions and sites)
+        run: node scripts/audit.mjs
+      - name: Audit self-test (planted problems must be caught)
+        run: node scripts/audit-selftest.mjs
+      - name: Firefox add-on lint
+        run: npx --yes web-ext@8 lint --source-dir src
+      - name: Reproducible build
+        run: |
+          node scripts/build.mjs
+          cp dist/*.zip /tmp/first.zip
+          node scripts/build.mjs > /dev/null
+          cmp /tmp/first.zip dist/*.zip && echo "byte-identical rebuild"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rigforge-helper
+          path: dist/
