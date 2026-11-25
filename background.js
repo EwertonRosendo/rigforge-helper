@@ -77,9 +77,74 @@ async function finish(job) {
   await chrome.tabs.update(job.tabId, { url: chrome.runtime.getURL("report.html") });
 }
 
+// ---- PC detection ----
+// The GPU is read here, in the extension's own context, because privacy browsers (Brave) mask the
+// WebGL renderer on web pages. CPU model and RAM come from system.cpu / system.memory, available in
+// Chromium browsers (Chrome, Edge, Brave, Opera, Vivaldi); Firefox has no such API, so it reports the GPU only.
+
+function gpuFromCanvas(canvas) {
+  const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
+  if (!gl) return "";
+  const ext = gl.getExtension("WEBGL_debug_renderer_info");
+  return String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER) || "");
+}
+
+async function readGpu() {
+  // Service worker (Chromium) and event page (Firefox) can both use OffscreenCanvas.
+  try {
+    if (typeof OffscreenCanvas !== "undefined") {
+      const r = gpuFromCanvas(new OffscreenCanvas(1, 1));
+      if (r) return r;
+    }
+  } catch { /* fall through */ }
+  // Firefox event pages also have a DOM.
+  try {
+    if (typeof document !== "undefined") {
+      const r = gpuFromCanvas(document.createElement("canvas"));
+      if (r) return r;
+    }
+  } catch { /* fall through */ }
+  // Chromium fallback: a hidden offscreen document with a real DOM.
+  if (chrome.offscreen) {
+    try {
+      if (!(await chrome.offscreen.hasDocument?.())) {
+        await chrome.offscreen.createDocument({
+          url: "offscreen.html",
+          reasons: ["DOM_SCRAPING"],
+          justification: "Read the graphics card name through WebGL for RigForge PC detection",
+        });
+      }
+      const res = await chrome.runtime.sendMessage({ type: "OFFSCREEN_GPU" });
+      return (res && res.gpu) || "";
+    } catch { /* ignore */ }
+  }
+  return "";
+}
+
+/** Only answers RigForge's own content script (site.js). */
+async function detect() {
+  const out = { ok: true, gpu: "", cpu: "", threads: undefined, ramBytes: undefined };
+  out.gpu = await readGpu();
+  try {
+    if (chrome.system && chrome.system.cpu) {
+      const cpu = await chrome.system.cpu.getInfo();
+      out.cpu = String(cpu.modelName || "").trim();
+      out.threads = cpu.numOfProcessors;
+    }
+    if (chrome.system && chrome.system.memory) out.ramBytes = (await chrome.system.memory.getInfo()).capacity;
+  } catch { /* partial result is still useful */ }
+  out.ok = !!(out.gpu || out.cpu || out.ramBytes);
+  return out;
+}
+
+const HANDLED = new Set(["DETECT", "START", "GET_TASK", "ADDING", "DONE"]);
+
 chrome.runtime.onMessage.addListener((msg, sender, send) => {
+  // Leave other messages (e.g. OFFSCREEN_GPU, answered by offscreen.js) alone.
+  if (!msg || !HANDLED.has(msg.type)) return false;
   (async () => {
-    if (msg.type === "START") send(await start(msg.jobs));
+    if (msg.type === "DETECT") send(await detect());
+    else if (msg.type === "START") send(await start(msg.jobs));
     else if (msg.type === "GET_TASK") send(await getTask(sender.tab));
     else if (msg.type === "ADDING") { await markClicked(sender.tab.id, msg.index); send({ ok: true }); }
     else if (msg.type === "DONE") { await advance(sender.tab.id, msg.index, msg.ok, msg.note); send({ ok: true }); }

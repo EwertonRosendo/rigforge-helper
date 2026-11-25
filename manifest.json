@@ -1,15 +1,21 @@
 {
   "manifest_version": 3,
-  "name": "RigForge Cart Helper",
-  "version": "0.1.0",
-  "description": "Adds your RigForge build to the KaBuM!, Pichau and Terabyte carts for you. You check out yourself.",
-  "permissions": ["storage", "tabs"],
+  "name": "RigForge Helper",
+  "version": "0.3.0",
+  "description": "Detects your PC (graphics card, exact CPU and RAM) for RigForge and fills the KaBuM!, Pichau and Terabyte carts with your build. You check out yourself.",
+  "permissions": ["storage", "tabs", "system.cpu", "system.memory", "offscreen"],
   "host_permissions": [
     "https://www.kabum.com.br/*",
     "https://www.pichau.com.br/*",
     "https://www.terabyteshop.com.br/*"
   ],
-  "background": { "service_worker": "background.js" },
+  "background": {
+    "service_worker": "background.js",
+    "scripts": ["background.js"]
+  },
+  "browser_specific_settings": {
+    "gecko": { "id": "helper@rigforge.app", "strict_min_version": "121.0" }
+  },
   "content_scripts": [
     {
       "matches": [
@@ -21,7 +27,12 @@
       "run_at": "document_idle"
     },
     {
-      "matches": ["http://localhost/*", "http://127.0.0.1/*", "https://rigforge.example.com/*"],
+      "matches": [
+        "http://localhost/*",
+        "http://127.0.0.1/*",
+        "http://rigforge.localhost/*",
+        "https://rigforge.example.com/*"
+      ],
       "js": ["site.js"],
       "run_at": "document_start"
     }
